@@ -36,7 +36,7 @@ const flatMap = (array, fn) => {
 };
 const processTextSearch = arrayOrString => {
   if (!arrayOrString) return arrayOrString;
-  if (arrayOrString instanceof Array) 
+  if (arrayOrString instanceof Array)
     return processTextSearch(arrayOrString[0]);
 
   const text = arrayOrString;
@@ -46,7 +46,7 @@ const processTextSearch = arrayOrString => {
 
 function processQuery(model, query) {
   let { _start, _end, _page, _limit } = query;
-  const { _sort, _order, _sep } = query;
+  const { _sort, _order, _sep, _select } = query;
 
   const q = processTextSearch(query.q);
 
@@ -131,6 +131,20 @@ function processQuery(model, query) {
           [attr]: _orderSet[index] || 1
         }
       });
+    });
+  }
+
+  if (_select) {
+    const included = !_select.match(/^-/);
+    const select = !included ? _select.replace('-', '') : _select;
+    const selectSet = select.split(',');
+    const signal = included ? 1 : 0;
+
+    aggregation.push({
+      $project: selectSet.reduce((obj, field) => {
+        obj[field] = signal;
+        return obj;
+      }, {})
     });
   }
 
