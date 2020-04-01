@@ -1,6 +1,6 @@
 {
   "name": "aggregation-from-query",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Create aggregations to use in mongoose with query params, based in query parse of json-server",
   "main": "index.js",
   "scripts": {
