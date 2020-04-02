@@ -134,20 +134,6 @@ function processQuery(model, query) {
     });
   }
 
-  if (_select) {
-    const included = !_select.match(/^-/);
-    const select = !included ? _select.replace('-', '') : _select;
-    const selectSet = select.split(',');
-    const signal = included ? 1 : 0;
-
-    aggregation.push({
-      $project: selectSet.reduce((obj, field) => {
-        obj[field] = signal;
-        return obj;
-      }, {})
-    });
-  }
-
   if (_end) {
     _start = parseInt(_start, 10) || 0;
     _end = parseInt(_end, 10) || 0;
@@ -169,6 +155,20 @@ function processQuery(model, query) {
     _limit = parseInt(_limit, 10) || 10;
 
     aggregation.push({ $limit: _limit });
+  }
+
+  if (_select) {
+    const included = !_select.match(/^-/);
+    const select = !included ? _select.replace('-', '') : _select;
+    const selectSet = select.split(',');
+    const signal = included ? 1 : 0;
+
+    aggregation.push({
+      $project: selectSet.reduce((obj, field) => {
+        obj[field] = signal;
+        return obj;
+      }, {})
+    });
   }
 
   return aggregation;
