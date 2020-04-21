@@ -51,6 +51,7 @@ function processQuery(model, query) {
   const q = processTextSearch(query.q);
 
   const aggregation = [];
+  const match = (condition) => aggregation.push({ $match: condition });
   const fullTextSearch = [];
   Object.keys(model.obj).forEach(attr => {
     const type = getType(model.obj[attr]);
@@ -59,19 +60,9 @@ function processQuery(model, query) {
       const value = query[attr];
 
       if (value instanceof Array) {
-        aggregation.push({
-          $match: {
-            [attr]: {
-              $in: value.map(cast(type))
-            }
-          }
-        });
+        match({ [attr]: { $in: value.map(cast(type)) } });
       } else {
-        aggregation.push({
-          $match: {
-            [attr]: cast(type)(value)
-          }
-        });
+        match({ [attr]: cast(type)(value) });
       }
     }
 
@@ -85,31 +76,13 @@ function processQuery(model, query) {
         const [_, sufix] = regex.exec(key);
 
         if (sufix.match(/n?in/)) {
-          aggregation.push({
-            $match: {
-              [attr]: {
-                [`$${sufix}`]: values.map(cast(type))
-              }
-            }
-          });
-        } else if (sufix === 'regexi') {
-          values.forEach(value => {
-            aggregation.push({
-              $match: {
-                [attr]: { $regex: value, $options: 'i' }
-              }
-            });
-          });
+          match({ [attr]: { [`$${sufix}`]: values.map(cast(type)) } });
+        } else if (sufix.match(/regexi?/)) {
+          if (type !== 'string') return;
+          const options = sufix === 'regexi' ? { $options: 'i' } : {};
+          match({ [attr]: { $regex: values.join('|'), ...options } });
         } else {
-          values.forEach(value => {
-            aggregation.push({
-              $match: {
-                [attr]: {
-                  [`$${sufix}`]: sufix === 'regex' ? value : cast(type)(value)
-                }
-              }
-            });
-          });
+          values.forEach((v) => match({ [attr]: { [`$${sufix}`]: cast(type)(v) } }));
         }
       }
     });
@@ -118,19 +91,14 @@ function processQuery(model, query) {
       fullTextSearch.push({ [attr]: { $regex: q, $options: 'i' } });
   });
 
-  if (fullTextSearch.length > 0)
-    aggregation.push({ $match: { $or: fullTextSearch } });
+  if (fullTextSearch.length > 0) match({ $or: fullTextSearch });
 
   if (_sort) {
     const _sortSet = _sort.split(',');
     const _orderSet = (_order || '').split(',').map(Number);
 
     _sortSet.forEach((attr, index) => {
-      aggregation.push({
-        $sort: {
-          [attr]: _orderSet[index] || 1
-        }
-      });
+      aggregation.push({ $sort: { [attr]: _orderSet[index] || 1 } });
     });
   }
 
