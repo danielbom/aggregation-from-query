@@ -23,9 +23,9 @@ processQuery(Book.schema, {
   price_lt: 100,
   _sort: "price",
   _order: "1",
-  _select: "title",
+  _select: "title,price",
   _limit: 10
-})
+});
 /*
 [
   {
@@ -67,7 +67,8 @@ processQuery(Book.schema, {
   },
   {
     $project: {
-      title: 1
+      title: 1,
+      price: 1
     }
   }
 ];
@@ -100,6 +101,8 @@ processQuery(Book.schema, {
 - Sort by (separeted by comma ',')
   - _sort
   - _order
+- Select (separeted by comma ',') and Non Select (started with '-')
+  - _select
 - Limits and ranges
   - _start
   - _end
