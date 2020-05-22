@@ -53,7 +53,7 @@ function processQuery(model, query) {
   const aggregation = [];
   const match = (condition) => aggregation.push({ $match: condition });
   const fullTextSearch = [];
-  Object.keys(model.obj).forEach(attr => {
+  Object.keys({ _id: ObjectId(), ...model.obj }).forEach(attr => {
     const type = getType(model.obj[attr]);
 
     if (has(query, attr)) {
