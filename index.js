@@ -46,7 +46,7 @@ const processTextSearch = arrayOrString => {
 
 function processQuery(model, query) {
   let { _start, _end, _page, _limit } = query;
-  const { _sort, _order, _sep, _select } = query;
+  const { _sort, _order, _sep = ',', _select } = query;
 
   const q = processTextSearch(query.q);
 
@@ -66,18 +66,18 @@ function processQuery(model, query) {
       }
     }
 
-    const regex = new RegExp(`${attr}_(lte?|gte?|eq|ne|n?in|regexi?)$`);
+    const regex = new RegExp(`^${attr}_(lte?|gte?|eq|ne|n?in|regexi?)$`);
 
     Object.keys(query).forEach(key => {
-      let values = [].concat(query[key]);
-      values = _sep ? flatMap(values, a => a.split(_sep)) : values;
-
       if (regex.test(key)) {
+        const values = flatMap([].concat(query[key]), a => a.toString().split(_sep));
         const [_, sufix] = regex.exec(key);
 
-        if (sufix.match(/n?in/)) {
-          match({ [attr]: { [`$${sufix}`]: values.map(cast(type)) } });
-        } else if (sufix.match(/regexi?/)) {
+        if (/^nin$/.test(sufix)) {
+          match({ [attr]: { $not: { $in: values.map(cast(type)) } } });
+        } else if (/^in$/.test(sufix)) {
+          match({ [attr]: { $in: values.map(cast(type)) } });
+        } else if (/regexi?/.test(sufix)) {
           if (type !== 'string') return;
           const options = sufix === 'regexi' ? { $options: 'i' } : {};
           match({ [attr]: { $regex: values.join('|'), ...options } });
