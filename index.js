@@ -139,7 +139,7 @@ function processQuery(model, query) {
     });
   }
 
-  return aggregation;
+  return aggregation.length === 0 ? [{ $match: {} }] : aggregation;
 }
 
 module.exports = processQuery;
